@@ -958,7 +958,7 @@ func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 	}
 
 	// Test SerializeClientMessage
-	serializedBytes, err := clientMessage.SerializeClientMessage()
+	serializedBytes, err := clientMessage.Serialize()
 	assert.Nil(t, err, "Error serializing message")
 
 	seralizedMessageType := strings.TrimRight(string(serializedBytes[ClientMessage_MessageTypeOffset:ClientMessage_MessageTypeOffset+ClientMessage_MessageTypeLength-1]), " ")
@@ -993,7 +993,7 @@ func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 
 	//Test DeserializeClientMessage
 	deserializedClientMessage := &ClientMessage{}
-	err = deserializedClientMessage.DeserializeClientMessage(serializedBytes)
+	err = deserializedClientMessage.Deserialize(serializedBytes)
 	assert.Nil(t, err)
 	assert.Equal(t, messageType, deserializedClientMessage.MessageType)
 	assert.Equal(t, schemaVersion, deserializedClientMessage.SchemaVersion)
@@ -1017,7 +1017,7 @@ func TestGetUuid(t *testing.T) {
 		Payload:        payload,
 	}
 
-	serialized, err := msg.SerializeClientMessage()
+	serialized, err := msg.Serialize()
 	assert.Nil(t, err)
 	id, err := getUuid(serialized, ClientMessage_MessageIdOffset)
 	assert.Nil(t, err)
@@ -1040,7 +1040,7 @@ func TestSerializeAndDeserializeClientMessageWithAcknowledgeContent(t *testing.T
 
 	serializedClientMsg, err := SerializeClientMessageWithAcknowledgeContent(acknowledgeContent)
 	deserializedClientMsg := &ClientMessage{}
-	err = deserializedClientMsg.DeserializeClientMessage(serializedClientMsg)
+	err = deserializedClientMsg.Deserialize(serializedClientMsg)
 	assert.Nil(t, err)
 	deserializedAcknowledgeContent, err := deserializedClientMsg.DeserializeDataStreamAcknowledgeContent()
 

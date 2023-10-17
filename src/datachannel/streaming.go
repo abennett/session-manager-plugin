@@ -304,7 +304,7 @@ func (dataChannel *DataChannel) SendInputDataMessage(
 		SequenceNumber: dataChannel.StreamDataSequenceNumber,
 	}
 
-	if msg, err = clientMessage.SerializeClientMessage(); err != nil {
+	if msg, err = clientMessage.Serialize(); err != nil {
 		log.Errorf("Cannot serialize StreamData message with error: %v", err)
 		return
 	}
@@ -402,7 +402,7 @@ func (dataChannel *DataChannel) SendAcknowledgeMessage(log log.T, streamDataMess
 // OutputMessageHandler gets output on the data channel
 func (dataChannel *DataChannel) OutputMessageHandler(log log.T, stopHandler Stop, sessionID string, rawMessage []byte) error {
 	outputMessage := &message.ClientMessage{}
-	err := outputMessage.DeserializeClientMessage(rawMessage)
+	err := outputMessage.Deserialize(rawMessage)
 	if err != nil {
 		log.Errorf("Cannot deserialize raw message: %s, err: %v.", string(rawMessage), err)
 		return err
@@ -727,7 +727,7 @@ func (dataChannel *DataChannel) ProcessIncomingMessageBufferItems(log log.T,
 			log.Debugf("Process stream data message from IncomingMessageBuffer. "+
 				"Sequence Number: %d", bufferedStreamMessage.SequenceNumber)
 
-			if err := outputMessage.DeserializeClientMessage(bufferedStreamMessage.Content); err != nil {
+			if err := outputMessage.Deserialize(bufferedStreamMessage.Content); err != nil {
 				log.Errorf("Cannot deserialize raw message with err: %v.", err)
 				return err
 			}

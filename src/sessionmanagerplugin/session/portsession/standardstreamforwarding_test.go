@@ -57,7 +57,7 @@ func TestStartSessionForStandardStreamForwarding(t *testing.T) {
 	}
 	portSession.SetSessionHandlers(mockLog)
 	deserializedMsg := &message.ClientMessage{}
-	err := deserializedMsg.DeserializeClientMessage(actualPayload)
+	err := deserializedMsg.Deserialize(actualPayload)
 	assert.Nil(t, err)
 	assert.Equal(t, outputMessage.Payload, deserializedMsg.Payload)
 }

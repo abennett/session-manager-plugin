@@ -27,12 +27,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeserializeClientMessage deserializes the byte array into an ClientMessage message.
+// Deserialize deserializes the byte array into an ClientMessage message.
 // * Payload is a variable length byte data.
 // * | HL|         MessageType           |Ver|  CD   |  Seq  | Flags |
 // * |         MessageId                     |           Digest              | PayType | PayLen|
 // * |         Payload      			|
-func (clientMessage *ClientMessage) DeserializeClientMessage(input []byte) (err error) {
+func (clientMessage *ClientMessage) Deserialize(input []byte) (err error) {
 	clientMessage.MessageType, err = getString(input, ClientMessage_MessageTypeOffset, ClientMessage_MessageTypeLength)
 	if err != nil {
 		return fmt.Errorf("Could not deserialize field MessageType with error: %v", err)
@@ -229,12 +229,12 @@ func (clientMessage *ClientMessage) Validate() error {
 	return nil
 }
 
-// SerializeClientMessage serializes ClientMessage message into a byte array.
+// Serialize serializes ClientMessage message into a byte array.
 // * Payload is a variable length byte data.
 // * | HL|         MessageType           |Ver|  CD   |  Seq  | Flags |
 // * |         MessageId                     |           Digest              |PayType| PayLen|
 // * |         Payload      			|
-func (clientMessage *ClientMessage) SerializeClientMessage() (result []byte, err error) {
+func (clientMessage *ClientMessage) Serialize() (result []byte, err error) {
 	payloadLength := uint32(len(clientMessage.Payload))
 	headerLength := uint32(ClientMessage_PayloadLengthOffset)
 	// Set payload length
@@ -472,7 +472,7 @@ func SerializeClientMessageWithAcknowledgeContent(acknowledgeContent Acknowledge
 		Payload:        acknowledgeContentBytes,
 	}
 
-	reply, err = clientMessage.SerializeClientMessage()
+	reply, err = clientMessage.Serialize()
 	if err != nil {
 		return nil, fmt.Errorf("Error serializing client message with acknowledge content err: %w", err)
 	}
