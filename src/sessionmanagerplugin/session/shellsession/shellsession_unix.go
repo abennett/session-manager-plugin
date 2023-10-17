@@ -28,7 +28,7 @@ import (
 	"github.com/abennett/session-manager-plugin/src/message"
 )
 
-//disableEchoAndInputBuffering disables echo to avoid double echo and disable input buffering
+// disableEchoAndInputBuffering disables echo to avoid double echo and disable input buffering
 func (s *ShellSession) disableEchoAndInputBuffering() {
 	getState(&s.originalSttyState)
 	setState(bytes.NewBufferString("cbreak"))
@@ -55,10 +55,9 @@ func setState(state *bytes.Buffer) error {
 func (s *ShellSession) Stop() {
 	setState(&s.originalSttyState)
 	setState(bytes.NewBufferString("echo")) // for linux and ubuntu
-	os.Exit(0)
 }
 
-//handleKeyboardInput handles input entered by customer on terminal
+// handleKeyboardInput handles input entered by customer on terminal
 func (s *ShellSession) handleKeyboardInput(log log.T) (err error) {
 	var (
 		stdinBytesLen int
