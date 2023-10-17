@@ -29,6 +29,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
+	"github.com/google/uuid"
+
 	"github.com/abennett/session-manager-plugin/src/communicator"
 	"github.com/abennett/session-manager-plugin/src/config"
 	"github.com/abennett/session-manager-plugin/src/encryption"
@@ -37,7 +39,6 @@ import (
 	"github.com/abennett/session-manager-plugin/src/service"
 	"github.com/abennett/session-manager-plugin/src/version"
 	"github.com/gorilla/websocket"
-	"github.com/twinj/uuid"
 )
 
 type IDataChannel interface {
@@ -199,8 +200,7 @@ func (dataChannel *DataChannel) SetWebsocket(log log.T, channelUrl string, chann
 
 // FinalizeHandshake sends the token for service to acknowledge the connection.
 func (dataChannel *DataChannel) FinalizeDataChannelHandshake(log log.T, tokenValue string) (err error) {
-	uuid.SwitchFormat(uuid.CleanHyphen)
-	uid := uuid.NewV4().String()
+	uid := uuid.New().String()
 
 	log.Infof("Sending token through data channel %s to acknowledge connection", dataChannel.wsChannel.GetStreamUrl())
 	openDataChannelInput := service.OpenDataChannelInput{
@@ -278,7 +278,7 @@ func (dataChannel *DataChannel) SendInputDataMessage(
 		msg  []byte
 	)
 
-	messageId := uuid.NewV4()
+	messageId := uuid.New()
 
 	// today 'enter' is taken as 'next line' in winpty shell. so hardcoding 'next line' byte to actual 'enter' byte
 	if bytes.Equal(inputData, []byte{10}) {
@@ -304,7 +304,7 @@ func (dataChannel *DataChannel) SendInputDataMessage(
 		SequenceNumber: dataChannel.StreamDataSequenceNumber,
 	}
 
-	if msg, err = clientMessage.SerializeClientMessage(log); err != nil {
+	if msg, err = clientMessage.SerializeClientMessage(); err != nil {
 		log.Errorf("Cannot serialize StreamData message with error: %v", err)
 		return
 	}
@@ -387,7 +387,7 @@ func (dataChannel *DataChannel) SendAcknowledgeMessage(log log.T, streamDataMess
 	}
 
 	var msg []byte
-	if msg, err = message.SerializeClientMessageWithAcknowledgeContent(log, dataStreamAcknowledgeContent); err != nil {
+	if msg, err = message.SerializeClientMessageWithAcknowledgeContent(dataStreamAcknowledgeContent); err != nil {
 		log.Errorf("Cannot serialize Acknowledge message err: %v", err)
 		return
 	}
@@ -402,7 +402,7 @@ func (dataChannel *DataChannel) SendAcknowledgeMessage(log log.T, streamDataMess
 // OutputMessageHandler gets output on the data channel
 func (dataChannel *DataChannel) OutputMessageHandler(log log.T, stopHandler Stop, sessionID string, rawMessage []byte) error {
 	outputMessage := &message.ClientMessage{}
-	err := outputMessage.DeserializeClientMessage(log, rawMessage)
+	err := outputMessage.DeserializeClientMessage(rawMessage)
 	if err != nil {
 		log.Errorf("Cannot deserialize raw message: %s, err: %v.", string(rawMessage), err)
 		return err
@@ -432,7 +432,7 @@ func (dataChannel *DataChannel) OutputMessageHandler(log log.T, stopHandler Stop
 // handleHandshakeRequest is the handler for payloads of type HandshakeRequest
 func (dataChannel *DataChannel) handleHandshakeRequest(log log.T, clientMessage message.ClientMessage) error {
 
-	handshakeRequest, err := clientMessage.DeserializeHandshakeRequest(log)
+	handshakeRequest, err := clientMessage.DeserializeHandshakeRequest()
 	if err != nil {
 		log.Errorf("Deserialize Handshake Request failed: %s", err)
 		return err
@@ -494,7 +494,7 @@ func (dataChannel *DataChannel) handleHandshakeRequest(log log.T, clientMessage 
 func (dataChannel *DataChannel) handleHandshakeComplete(log log.T, clientMessage message.ClientMessage) error {
 	var err error
 	var handshakeComplete message.HandshakeCompletePayload
-	handshakeComplete, err = clientMessage.DeserializeHandshakeComplete(log)
+	handshakeComplete, err = clientMessage.DeserializeHandshakeComplete()
 	if err != nil {
 		return err
 	}
@@ -727,7 +727,7 @@ func (dataChannel *DataChannel) ProcessIncomingMessageBufferItems(log log.T,
 			log.Debugf("Process stream data message from IncomingMessageBuffer. "+
 				"Sequence Number: %d", bufferedStreamMessage.SequenceNumber)
 
-			if err := outputMessage.DeserializeClientMessage(log, bufferedStreamMessage.Content); err != nil {
+			if err := outputMessage.DeserializeClientMessage(bufferedStreamMessage.Content); err != nil {
 				log.Errorf("Cannot deserialize raw message with err: %v.", err)
 				return err
 			}
@@ -762,7 +762,7 @@ func (dataChannel *DataChannel) HandleAcknowledgeMessage(
 	outputMessage message.ClientMessage) (err error) {
 
 	var acknowledgeMessage message.AcknowledgeContent
-	if acknowledgeMessage, err = outputMessage.DeserializeDataStreamAcknowledgeContent(log); err != nil {
+	if acknowledgeMessage, err = outputMessage.DeserializeDataStreamAcknowledgeContent(); err != nil {
 		log.Errorf("Cannot deserialize payload to AcknowledgeMessage with error: %v.", err)
 		return err
 	}
@@ -777,7 +777,7 @@ func (dataChannel DataChannel) HandleChannelClosedMessage(log log.T, stopHandler
 		channelClosedMessage message.ChannelClosed
 		err                  error
 	)
-	if channelClosedMessage, err = outputMessage.DeserializeChannelClosedMessage(log); err != nil {
+	if channelClosedMessage, err = outputMessage.DeserializeChannelClosedMessage(); err != nil {
 		log.Errorf("Cannot deserialize payload to ChannelClosedMessage: %v.", err)
 	}
 

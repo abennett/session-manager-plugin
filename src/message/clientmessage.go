@@ -15,8 +15,9 @@
 package message
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/abennett/session-manager-plugin/src/log"
-	"github.com/twinj/uuid"
 )
 
 const (

@@ -109,7 +109,7 @@ func TestStartSessionWithClosedWsConn(t *testing.T) {
 	}
 	portSession.SetSessionHandlers(mockLog)
 	deserializedMsg := &message.ClientMessage{}
-	err := deserializedMsg.DeserializeClientMessage(mockLog, actualPayload)
+	err := deserializedMsg.DeserializeClientMessage(actualPayload)
 	assert.Nil(t, err)
 	assert.Equal(t, outputMessage.Payload, deserializedMsg.Payload)
 }

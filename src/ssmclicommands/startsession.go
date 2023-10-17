@@ -21,8 +21,8 @@ import (
 	"html/template"
 	"strings"
 
-	sdkSession "github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/google/uuid"
+
 	"github.com/abennett/session-manager-plugin/src/datachannel"
 	"github.com/abennett/session-manager-plugin/src/jsonutil"
 	"github.com/abennett/session-manager-plugin/src/log"
@@ -31,7 +31,8 @@ import (
 	_ "github.com/abennett/session-manager-plugin/src/sessionmanagerplugin/session/portsession"
 	_ "github.com/abennett/session-manager-plugin/src/sessionmanagerplugin/session/shellsession"
 	"github.com/abennett/session-manager-plugin/src/ssmclicommands/utils"
-	"github.com/twinj/uuid"
+	sdkSession "github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 )
 
 const (
@@ -88,7 +89,7 @@ type StartSessionCommand struct {
 	sdk      *ssm.SSM
 }
 
-//getSSMClient generate ssm client by configuration
+// getSSMClient generate ssm client by configuration
 var getSSMClient = func(log log.T, region string, profile string, endpoint string) (*ssm.SSM, error) {
 	sdkutil.SetRegionAndProfile(region, profile)
 
@@ -101,7 +102,7 @@ var getSSMClient = func(log log.T, region string, profile string, endpoint strin
 	return ssm.New(sdkSession), nil
 }
 
-//executeSession to open datachannel
+// executeSession to open datachannel
 var executeSession = func(log log.T, session *session.Session) (err error) {
 	return session.Execute(log)
 }
@@ -141,7 +142,7 @@ func (c *StartSessionCommand) Help() string {
 	return c.helpText
 }
 
-//validates and execute start-session command
+// validates and execute start-session command
 func (s *StartSessionCommand) Execute(parameters map[string][]string) (error, string) {
 	var (
 		err        error
@@ -182,7 +183,7 @@ func (s *StartSessionCommand) Execute(parameters map[string][]string) (error, st
 		return err, "StartSession failed"
 	}
 	log.Infof("For SessionId: %s, StartSession returned streamUrl: %s", sessionId, streamUrl)
-	clientId := uuid.NewV4().String()
+	clientId := uuid.New().String()
 
 	session := session.Session{
 		SessionId:   sessionId,
@@ -202,7 +203,7 @@ func (s *StartSessionCommand) Execute(parameters map[string][]string) (error, st
 	return err, "StartSession executed successfully"
 }
 
-//func to validate start-session input
+// func to validate start-session input
 func (StartSessionCommand) validateStartSessionInput(parameters map[string][]string) []string {
 	validation := make([]string, 0)
 
@@ -235,8 +236,6 @@ func contains(arr []string, item string) bool {
 // function to get start-session parameters
 func (s *StartSessionCommand) getStartSessionParams(log log.T, parameters map[string][]string) (string, string, string, error) {
 	//Fetch command token
-	uuid.SwitchFormat(uuid.CleanHyphen)
-
 	startSessionInput := ssm.StartSessionInput{
 		Target: &parameters[INSTANCE_ID][0],
 	}

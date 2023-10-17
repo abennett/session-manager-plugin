@@ -89,7 +89,7 @@ func (s *PortSession) Initialize(log log.T, sessionVar *session.Session) {
 	s.DataChannel.GetWsChannel().SetOnMessage(func(input []byte) {
 		if s.portSessionType.IsStreamNotSet() {
 			outputMessage := &message.ClientMessage{}
-			if err := outputMessage.DeserializeClientMessage(log, input); err != nil {
+			if err := outputMessage.DeserializeClientMessage(input); err != nil {
 				log.Debugf("Ignore message deserialize error while stream connection had not set.")
 				return
 			}

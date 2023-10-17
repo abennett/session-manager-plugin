@@ -25,6 +25,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
+	"github.com/google/uuid"
+
 	communicatorMocks "github.com/abennett/session-manager-plugin/src/communicator/mocks"
 	"github.com/abennett/session-manager-plugin/src/config"
 	"github.com/abennett/session-manager-plugin/src/encryption"
@@ -35,7 +37,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/twinj/uuid"
 )
 
 var (
@@ -387,7 +388,7 @@ func TestDataChannelIncomingMessageHandlerForAcknowledgeMessage(t *testing.T) {
 	}
 	payload, _ = json.Marshal(acknowledgeContent)
 	clientMessage := getClientMessage(0, message.AcknowledgeMessage, uint32(message.Output), payload)
-	serializedClientMessage, _ := clientMessage.SerializeClientMessage(logger)
+	serializedClientMessage, _ := clientMessage.SerializeClientMessage()
 	err := dataChannel.OutputMessageHandler(logger, stopHandler, sessionId, serializedClientMessage)
 
 	assert.Nil(t, err)
@@ -405,7 +406,7 @@ func TestDataChannelIncomingMessageHandlerForPausePublicationessage(t *testing.T
 	serializedClientMessage := make([][]byte, size)
 	for i := 0; i < size; i++ {
 		clientMessage := getClientMessage(int64(i), message.PausePublicationMessage, uint32(message.Output), []byte(""))
-		serializedClientMessage[i], _ = clientMessage.SerializeClientMessage(mockLogger)
+		serializedClientMessage[i], _ = clientMessage.SerializeClientMessage()
 		streamingMessages[i] = StreamingMessage{
 			serializedClientMessage[i],
 			int64(i),
@@ -434,7 +435,7 @@ func TestHandshakeRequestHandler(t *testing.T) {
 	handshakeRequestBytes, _ := json.Marshal(buildHandshakeRequest())
 	clientMessage := getClientMessage(0, message.OutputStreamMessage,
 		uint32(message.HandshakeRequestPayloadType), handshakeRequestBytes)
-	handshakeRequestMessageBytes, _ := clientMessage.SerializeClientMessage(mockLogger)
+	handshakeRequestMessageBytes, _ := clientMessage.SerializeClientMessage()
 
 	newEncrypter = func(log log.T, kmsKeyIdInput string, context map[string]*string, KMSService kmsiface.KMSAPI) (encryption.IEncrypter, error) {
 		expectedContext := map[string]*string{"aws:ssm:SessionId": &sessionId, "aws:ssm:TargetId": &instanceId}
@@ -446,7 +447,7 @@ func TestHandshakeRequestHandler(t *testing.T) {
 	// Mock sending of encryption challenge
 	handshakeResponseMatcher := func(sentData []byte) bool {
 		clientMessage := &message.ClientMessage{}
-		clientMessage.DeserializeClientMessage(mockLogger, sentData)
+		clientMessage.DeserializeClientMessage(sentData)
 		var handshakeResponse = message.HandshakeResponsePayload{}
 		json.Unmarshal(clientMessage.Payload, &handshakeResponse)
 		// Return true if any other message type (typically to account for acknowledge)
@@ -613,7 +614,7 @@ func getClientAndStreamingMessageList(size int) (serializedClientMessage [][]byt
 	for i := 0; i < size; i++ {
 		payload = "testPayload" + strconv.Itoa(i)
 		clientMessage := getClientMessage(int64(i), messageType, uint32(message.Output), []byte(payload))
-		serializedClientMessage[i], _ = clientMessage.SerializeClientMessage(mockLogger)
+		serializedClientMessage[i], _ = clientMessage.SerializeClientMessage()
 		streamingMessages[i] = StreamingMessage{
 			serializedClientMessage[i],
 			int64(i),

@@ -22,9 +22,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/abennett/session-manager-plugin/src/config"
-
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/google/uuid"
+
+	"github.com/abennett/session-manager-plugin/src/config"
 	"github.com/abennett/session-manager-plugin/src/datachannel"
 	"github.com/abennett/session-manager-plugin/src/log"
 	"github.com/abennett/session-manager-plugin/src/message"
@@ -32,7 +33,6 @@ import (
 	"github.com/abennett/session-manager-plugin/src/sdkutil"
 	"github.com/abennett/session-manager-plugin/src/sessionmanagerplugin/session/sessionutil"
 	"github.com/abennett/session-manager-plugin/src/version"
-	"github.com/twinj/uuid"
 )
 
 const (
@@ -86,12 +86,12 @@ type Session struct {
 	DisplayMode           sessionutil.DisplayMode
 }
 
-//startSession create the datachannel for session
+// startSession create the datachannel for session
 var startSession = func(session *Session, log log.T) error {
 	return session.Execute(log)
 }
 
-//setSessionHandlersWithSessionType set session handlers based on session subtype
+// setSessionHandlersWithSessionType set session handlers based on session subtype
 var setSessionHandlersWithSessionType = func(session *Session, log log.T) error {
 	// SessionType is set inside DataChannel
 	sessionSubType := SessionRegistry[session.SessionType]
@@ -139,7 +139,6 @@ func ValidateInputAndStartSession(args []string, out io.Writer) {
 		target             string
 	)
 	log := log.Logger(true, "session-manager-plugin")
-	uuid.SwitchFormat(uuid.CleanHyphen)
 
 	if len(args) == 1 {
 		fmt.Fprint(out, "\nThe Session Manager plugin was installed successfully. "+
@@ -179,7 +178,7 @@ func ValidateInputAndStartSession(args []string, out io.Writer) {
 		}
 	}
 	sdkutil.SetRegionAndProfile(region, profile)
-	clientId := uuid.NewV4().String()
+	clientId := uuid.New().String()
 
 	switch operationName {
 	case StartSessionOperation:
@@ -209,7 +208,7 @@ func ValidateInputAndStartSession(args []string, out io.Writer) {
 	}
 }
 
-//Execute create data channel and start the session
+// Execute create data channel and start the session
 func (s *Session) Execute(log log.T) (err error) {
 	fmt.Fprintf(os.Stdout, "\nStarting session with SessionId: %s\n", s.SessionId)
 

@@ -24,9 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abennett/session-manager-plugin/src/log"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/twinj/uuid"
 )
 
 type EXPECTATION int
@@ -51,7 +50,6 @@ func get16ByteBuffer() []byte {
 }
 
 var (
-	mockLogger                 = log.NewMockLog()
 	defaultByteBufferGenerator = get8ByteBuffer
 	messageId                  = "dd01e56b-ff48-483e-a508-b5f073f31b16"
 	messageType                = InputStreamMessage
@@ -173,7 +171,7 @@ func TestPutString(t *testing.T) {
 			assert.True(t, ok, "Type assertion failed in %s:%s", t.Name(), tc.name)
 
 			err := putString(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				tc.offsetEnd,
@@ -240,7 +238,7 @@ func TestPutBytes(t *testing.T) {
 			assert.True(t, ok, "Type assertion failed in %s:%s", t.Name(), tc.name)
 
 			err := putBytes(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				tc.offsetEnd,
@@ -277,7 +275,7 @@ func TestLongToBytes(t *testing.T) {
 	for _, tc := range testcases {
 		testString := fmt.Sprintf("Running test case: %s", tc.name)
 		t.Run(testString, func(t *testing.T) {
-			bytes, err := longToBytes(mockLogger, tc.input)
+			bytes, err := longToBytes(tc.input)
 			if tc.expectation == SUCCESS {
 				assert.Nil(t, err, "An error was thrown when none was expected.")
 				assert.True(t, reflect.DeepEqual(bytes, tc.expected))
@@ -358,7 +356,7 @@ func TestPutLong(t *testing.T) {
 			assert.True(t, ok, "Type assertion failed in %s:%s", t.Name(), tc.name)
 
 			err := putLong(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				int64(longInput))
@@ -444,7 +442,7 @@ func TestPutInteger(t *testing.T) {
 			assert.True(t, ok, "Type assertion failed in %s:%s", t.Name(), tc.name)
 
 			err := putInteger(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				int32(intInput))
@@ -506,7 +504,7 @@ func TestGetString(t *testing.T) {
 		testString := fmt.Sprintf("Running test case: %s", tc.name)
 		t.Run(testString, func(t *testing.T) {
 			strOut, err := getString(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				tc.offsetEnd)
@@ -568,7 +566,7 @@ func TestGetBytes(t *testing.T) {
 		testString := fmt.Sprintf("Running test case: %s", tc.name)
 		t.Run(testString, func(t *testing.T) {
 			byteOut, err := getBytes(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				tc.offsetEnd)
@@ -648,7 +646,7 @@ func TestGetLong(t *testing.T) {
 		testString := fmt.Sprintf("Running test case: %s", tc.name)
 		t.Run(testString, func(t *testing.T) {
 			longOut, err := getLong(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart)
 			assert.IsType(t, int64(1), longOut, "Returned value is not the correct type.")
@@ -729,17 +727,17 @@ func TestClientMessage_DeserializeDataStreamAcknowledgeContent(t *testing.T) {
 		Payload: payload,
 	}
 
-	ackMessage, err := testMessage.DeserializeDataStreamAcknowledgeContent(mockLogger)
+	ackMessage, err := testMessage.DeserializeDataStreamAcknowledgeContent()
 	assert.Equal(t, AcknowledgeContent{}, ackMessage)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.MessageType = AcknowledgeMessage
-	ackMessage2, err := testMessage.DeserializeDataStreamAcknowledgeContent(mockLogger)
+	ackMessage2, err := testMessage.DeserializeDataStreamAcknowledgeContent()
 	assert.Equal(t, AcknowledgeContent{}, ackMessage2)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.Payload = ackMessagePayload
-	ackMessage3, err := testMessage.DeserializeDataStreamAcknowledgeContent(mockLogger)
+	ackMessage3, err := testMessage.DeserializeDataStreamAcknowledgeContent()
 	assert.Equal(t, AcknowledgeMessage, ackMessage3.MessageType)
 	assert.Equal(t, messageId, ackMessage3.MessageId)
 	assert.Nil(t, err, "An error was thrown when one was not expected.")
@@ -752,17 +750,17 @@ func TestClientMessage_DeserializeChannelClosedMessage(t *testing.T) {
 		Payload: payload,
 	}
 
-	closeMessage, err := testMessage.DeserializeChannelClosedMessage(mockLogger)
+	closeMessage, err := testMessage.DeserializeChannelClosedMessage()
 	assert.Equal(t, ChannelClosed{}, closeMessage)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.MessageType = ChannelClosedMessage
-	closeMessage2, err := testMessage.DeserializeChannelClosedMessage(mockLogger)
+	closeMessage2, err := testMessage.DeserializeChannelClosedMessage()
 	assert.Equal(t, ChannelClosed{}, closeMessage2)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.Payload = channelClosedPayload
-	closeMessage3, err := testMessage.DeserializeChannelClosedMessage(mockLogger)
+	closeMessage3, err := testMessage.DeserializeChannelClosedMessage()
 	assert.Equal(t, ChannelClosedMessage, closeMessage3.MessageType)
 	assert.Equal(t, messageId, closeMessage3.MessageId)
 	assert.Equal(t, strconv.FormatUint(createdDate, 10), closeMessage3.CreatedDate)
@@ -779,17 +777,17 @@ func TestClientMessage_DeserializeHandshakeRequest(t *testing.T) {
 		Payload: payload,
 	}
 
-	handshakeReq, err := testMessage.DeserializeHandshakeRequest(mockLogger)
+	handshakeReq, err := testMessage.DeserializeHandshakeRequest()
 	assert.Equal(t, HandshakeRequestPayload{}, handshakeReq)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.PayloadType = uint32(HandshakeRequestPayloadType)
-	handshakeReq2, err := testMessage.DeserializeHandshakeRequest(mockLogger)
+	handshakeReq2, err := testMessage.DeserializeHandshakeRequest()
 	assert.Equal(t, HandshakeRequestPayload{}, handshakeReq2)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.Payload = handshakeReqPayload
-	handshakeReq3, err := testMessage.DeserializeHandshakeRequest(mockLogger)
+	handshakeReq3, err := testMessage.DeserializeHandshakeRequest()
 	assert.Equal(t, agentVersion, handshakeReq3.AgentVersion)
 	assert.Equal(t, ActionType(actionType), handshakeReq3.RequestedClientActions[0].ActionType)
 	assert.Equal(t, json.RawMessage(sampleParameters), handshakeReq3.RequestedClientActions[0].ActionParameters)
@@ -803,17 +801,17 @@ func TestClientMessage_DeserializeHandshakeComplete(t *testing.T) {
 		Payload: payload,
 	}
 
-	handshakeComplete, err := testMessage.DeserializeHandshakeComplete(mockLogger)
+	handshakeComplete, err := testMessage.DeserializeHandshakeComplete()
 	assert.Equal(t, HandshakeCompletePayload{}, handshakeComplete)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.PayloadType = uint32(HandshakeCompletePayloadType)
-	handshakeComplete2, err := testMessage.DeserializeHandshakeComplete(mockLogger)
+	handshakeComplete2, err := testMessage.DeserializeHandshakeComplete()
 	assert.Equal(t, HandshakeCompletePayload{}, handshakeComplete2)
 	assert.NotNil(t, err, "An error was not thrown when one was expected.")
 
 	testMessage.Payload = handshakeCompletePayload
-	handshakeComplete3, err := testMessage.DeserializeHandshakeComplete(mockLogger)
+	handshakeComplete3, err := testMessage.DeserializeHandshakeComplete()
 	assert.Equal(t, time.Duration(timeToComplete), handshakeComplete3.HandshakeTimeToComplete)
 	assert.Equal(t, customerMessage, handshakeComplete3.CustomerMessage)
 	assert.Nil(t, err, "An error was thrown when one was not expected.")
@@ -862,7 +860,7 @@ func TestPutUuid(t *testing.T) {
 			uuidInput, err := uuid.Parse(strInput)
 
 			err = putUuid(
-				mockLogger,
+
 				tc.byteArray,
 				tc.offsetStart,
 				uuidInput)
@@ -871,7 +869,7 @@ func TestPutUuid(t *testing.T) {
 				strExpected := tc.expected.(string)
 				uuidOut, _ := uuid.Parse(strExpected)
 				expectedBuffer := get16ByteBuffer()
-				putUuid(mockLogger, expectedBuffer, 0, uuidOut)
+				putUuid(expectedBuffer, 0, uuidOut)
 				assert.Equal(t, tc.byteArray, expectedBuffer)
 			} else if tc.expectation == ERROR {
 				assert.Error(t, err, "%s:%s did not throw an error when an error was expected.", t.Name(), tc.name)
@@ -885,10 +883,10 @@ func TestPutUuid(t *testing.T) {
 
 func TestPutGetString(t *testing.T) {
 	input := []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x01}
-	err1 := putString(log.NewMockLog(), input, 1, 8, "hello")
+	err1 := putString(input, 1, 8, "hello")
 	assert.Nil(t, err1)
 
-	result, err := getString(log.NewMockLog(), input, 1, 8)
+	result, err := getString(input, 1, 8)
 	assert.Nil(t, err)
 	assert.Equal(t, "hello", result)
 
@@ -896,29 +894,29 @@ func TestPutGetString(t *testing.T) {
 
 func TestPutGetInteger(t *testing.T) {
 	input := []byte{0x00, 0x00, 0x00, 0x00, 0xFF, 0x00}
-	err := putInteger(log.NewMockLog(), input, 1, 256)
+	err := putInteger(input, 1, 256)
 	assert.Nil(t, err)
 	assert.Equal(t, byte(0x00), input[1])
 	assert.Equal(t, byte(0x00), input[2])
 	assert.Equal(t, byte(0x01), input[3])
 	assert.Equal(t, byte(0x00), input[4])
 
-	result, err2 := getInteger(log.NewMockLog(), input, 1)
+	result, err2 := getInteger(input, 1)
 	assert.Nil(t, err2)
 	assert.Equal(t, int32(256), result)
 
-	result2, err3 := getInteger(log.NewMockLog(), input, 2)
+	result2, err3 := getInteger(input, 2)
 	assert.Equal(t, int32(65536), result2)
 	assert.Nil(t, err3)
 
-	result3, err4 := getInteger(mockLogger, input, 3)
+	result3, err4 := getInteger(input, 3)
 	assert.Equal(t, int32(0), result3)
 	assert.NotNil(t, err4)
 }
 
 func TestPutGetLong(t *testing.T) {
 	input := []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00}
-	err := putLong(log.NewMockLog(), input, 1, 4294967296) // 2 to the 32 + 1
+	err := putLong(input, 1, 4294967296) // 2 to the 32 + 1
 	assert.Nil(t, err)
 	assert.Equal(t, byte(0x00), input[1])
 	assert.Equal(t, byte(0x00), input[2])
@@ -929,14 +927,14 @@ func TestPutGetLong(t *testing.T) {
 	assert.Equal(t, byte(0x00), input[7])
 	assert.Equal(t, byte(0x00), input[8])
 
-	testLong, err2 := getLong(log.NewMockLog(), input, 1)
+	testLong, err2 := getLong(input, 1)
 	assert.Nil(t, err2)
 	assert.Equal(t, int64(4294967296), testLong)
 }
 
 func TestGetBytesFromInteger(t *testing.T) {
 	input := int32(256)
-	result, err := integerToBytes(log.NewMockLog(), input)
+	result, err := integerToBytes(input)
 	assert.Nil(t, err)
 	assert.Equal(t, byte(0x00), result[0])
 	assert.Equal(t, byte(0x00), result[1])
@@ -946,7 +944,8 @@ func TestGetBytesFromInteger(t *testing.T) {
 
 func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 
-	u, _ := uuid.Parse(messageId)
+	u, err := uuid.Parse(messageId)
+	assert.Nil(t, err)
 
 	clientMessage := ClientMessage{
 		MessageType:    messageType,
@@ -959,33 +958,33 @@ func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 	}
 
 	// Test SerializeClientMessage
-	serializedBytes, err := clientMessage.SerializeClientMessage(log.NewMockLog())
+	serializedBytes, err := clientMessage.SerializeClientMessage()
 	assert.Nil(t, err, "Error serializing message")
 
 	seralizedMessageType := strings.TrimRight(string(serializedBytes[ClientMessage_MessageTypeOffset:ClientMessage_MessageTypeOffset+ClientMessage_MessageTypeLength-1]), " ")
 	assert.Equal(t, seralizedMessageType, messageType)
 
-	serializedVersion, err := getUInteger(log.NewMockLog(), serializedBytes, ClientMessage_SchemaVersionOffset)
+	serializedVersion, err := getUInteger(serializedBytes, ClientMessage_SchemaVersionOffset)
 	assert.Nil(t, err)
 	assert.Equal(t, serializedVersion, schemaVersion)
 
-	serializedCD, err := getULong(log.NewMockLog(), serializedBytes, ClientMessage_CreatedDateOffset)
+	serializedCD, err := getULong(serializedBytes, ClientMessage_CreatedDateOffset)
 	assert.Nil(t, err)
 	assert.Equal(t, serializedCD, createdDate)
 
-	serializedSequence, err := getLong(log.NewMockLog(), serializedBytes, ClientMessage_SequenceNumberOffset)
+	serializedSequence, err := getLong(serializedBytes, ClientMessage_SequenceNumberOffset)
 	assert.Nil(t, err)
 	assert.Equal(t, serializedSequence, int64(1))
 
-	serializedFlags, err := getULong(log.NewMockLog(), serializedBytes, ClientMessage_FlagsOffset)
+	serializedFlags, err := getULong(serializedBytes, ClientMessage_FlagsOffset)
 	assert.Nil(t, err)
 	assert.Equal(t, serializedFlags, uint64(2))
 
-	seralizedMessageId, err := getUuid(log.NewMockLog(), serializedBytes, ClientMessage_MessageIdOffset)
+	seralizedMessageId, err := getUuid(serializedBytes, ClientMessage_MessageIdOffset)
 	assert.Nil(t, err)
 	assert.Equal(t, seralizedMessageId.String(), messageId)
 
-	serializedDigest, err := getBytes(log.NewMockLog(), serializedBytes, ClientMessage_PayloadDigestOffset, ClientMessage_PayloadDigestLength)
+	serializedDigest, err := getBytes(serializedBytes, ClientMessage_PayloadDigestOffset, ClientMessage_PayloadDigestLength)
 	assert.Nil(t, err)
 	hasher := sha256.New()
 	hasher.Write(clientMessage.Payload)
@@ -994,7 +993,7 @@ func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 
 	//Test DeserializeClientMessage
 	deserializedClientMessage := &ClientMessage{}
-	err = deserializedClientMessage.DeserializeClientMessage(log.NewMockLog(), serializedBytes)
+	err = deserializedClientMessage.DeserializeClientMessage(serializedBytes)
 	assert.Nil(t, err)
 	assert.Equal(t, messageType, deserializedClientMessage.MessageType)
 	assert.Equal(t, schemaVersion, deserializedClientMessage.SchemaVersion)
@@ -1005,9 +1004,29 @@ func TestSerializeAndDeserializeClientMessage(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(payload, deserializedClientMessage.Payload))
 }
 
+func TestGetUuid(t *testing.T) {
+	u, err := uuid.Parse(messageId)
+	assert.Nil(t, err)
+	msg := ClientMessage{
+		MessageType:    messageType,
+		SchemaVersion:  schemaVersion,
+		CreatedDate:    createdDate,
+		SequenceNumber: 1,
+		Flags:          2,
+		MessageId:      u,
+		Payload:        payload,
+	}
+
+	serialized, err := msg.SerializeClientMessage()
+	assert.Nil(t, err)
+	id, err := getUuid(serialized, ClientMessage_MessageIdOffset)
+	assert.Nil(t, err)
+	assert.Equal(t, id.String(), messageId)
+}
+
 func TestSerializeMessagePayloadNegative(t *testing.T) {
 	var functionEx = func() {}
-	_, err := SerializeClientMessagePayload(mockLogger, functionEx)
+	_, err := SerializeClientMessagePayload(functionEx)
 	assert.NotNil(t, err)
 }
 
@@ -1019,11 +1038,11 @@ func TestSerializeAndDeserializeClientMessageWithAcknowledgeContent(t *testing.T
 		IsSequentialMessage: true,
 	}
 
-	serializedClientMsg, err := SerializeClientMessageWithAcknowledgeContent(log.NewMockLog(), acknowledgeContent)
+	serializedClientMsg, err := SerializeClientMessageWithAcknowledgeContent(acknowledgeContent)
 	deserializedClientMsg := &ClientMessage{}
-	err = deserializedClientMsg.DeserializeClientMessage(log.NewMockLog(), serializedClientMsg)
+	err = deserializedClientMsg.DeserializeClientMessage(serializedClientMsg)
 	assert.Nil(t, err)
-	deserializedAcknowledgeContent, err := deserializedClientMsg.DeserializeDataStreamAcknowledgeContent(log.NewMockLog())
+	deserializedAcknowledgeContent, err := deserializedClientMsg.DeserializeDataStreamAcknowledgeContent()
 
 	assert.Nil(t, err)
 	assert.Equal(t, messageType, deserializedAcknowledgeContent.MessageType)
@@ -1054,7 +1073,7 @@ func TestDeserializeAgentMessageWithChannelClosed(t *testing.T) {
 		Payload:        channelClosedJson,
 	}
 
-	deserializedChannelClosed, err := agentMessage.DeserializeChannelClosedMessage(log.NewMockLog())
+	deserializedChannelClosed, err := agentMessage.DeserializeChannelClosedMessage()
 
 	assert.Nil(t, err)
 	assert.Equal(t, ChannelClosedMessage, deserializedChannelClosed.MessageType)
